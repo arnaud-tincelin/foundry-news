@@ -57,12 +57,20 @@ def main() -> int:
         }
     )
 
+    # Rebuilding an older week must not rewind the cursor, or the next
+    # scheduled run would re-scan a period that is already covered.
+    covered_through = digest["until"]
+    previous = state.get("last_covered_through")
+    if previous and previous > covered_through:
+        print(f"keeping existing cursor {previous[:10]} (this run only covered up to {covered_through[:10]})")
+        covered_through = previous
+
     state.update(
         {
             "seen": seen,
             "last_run": dt.datetime.now(dt.timezone.utc).isoformat(),
             # Next run's window starts exactly where this one ended: no gaps, no overlap.
-            "last_covered_through": digest["until"],
+            "last_covered_through": covered_through,
             "history": history[-200:],
         }
     )
@@ -72,7 +80,7 @@ def main() -> int:
         json.dump(state, fh, indent=2, ensure_ascii=False)
         fh.write("\n")
 
-    print(f"state updated: {len(seen)} items covered, next window starts {digest['until'][:10]}")
+    print(f"state updated: {len(seen)} items covered, next window starts {covered_through[:10]}")
     return 0
 
 

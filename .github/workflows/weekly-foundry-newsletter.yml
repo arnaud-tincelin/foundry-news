@@ -12,6 +12,10 @@ on:
       until:
         description: "Override window end, exclusive (YYYY-MM-DD). Blank = now."
         required: false
+      force:
+        description: "Re-collect the window even if items were already covered (use to rebuild a week)."
+        type: boolean
+        default: false
       dry_run:
         description: "Generate and validate but do not commit."
         type: boolean
@@ -35,10 +39,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -47,10 +51,12 @@ jobs:
         env:
           SINCE: ${{ inputs.since }}
           UNTIL: ${{ inputs.until }}
+          FORCE: ${{ inputs.force }}
         run: |
           args=()
           if [ -n "$SINCE" ]; then args+=(--since "$SINCE"); fi
           if [ -n "$UNTIL" ]; then args+=(--until "$UNTIL"); fi
+          if [ "$FORCE" = "true" ]; then args+=(--ignore-state); fi
           python scripts/collect_sources.py "${args[@]}"
 
       - name: Report when there is no news
@@ -61,14 +67,18 @@ jobs:
         run: |
           {
             echo "### No new Microsoft Foundry news this week"
-            echo "Window \`$SINCE\` to \`$UNTIL\`. No newsletter file was created."
+            echo ""
+            echo "Window \`$SINCE\` to \`$UNTIL\` produced no *previously uncovered* items, so no newsletter file was created."
+            echo ""
+            echo "Every matching item in that window was already published in an earlier newsletter."
+            echo "To rebuild a week anyway, re-run this workflow with **force** enabled."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set up Node.js
         if: steps.collect.outputs.has_news == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "24"
 
       - name: Install Copilot CLI
         if: steps.collect.outputs.has_news == 'true'
@@ -156,7 +166,7 @@ jobs:
 
       - name: Upload run artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: newsletter-run-${{ github.run_id }}
           path: |
