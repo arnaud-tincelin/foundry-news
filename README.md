@@ -40,16 +40,6 @@ and on demand from the Actions tab.
 | Azure Updates | `microsoft.com/releasecommunications/api/v2/azure/rss` |
 | Microsoft Learn (reference, agent-fetched) | *What's new in Azure AI Foundry*, AI Foundry pricing |
 
-### LinkedIn
-
-Posts by Sunita Kannan **cannot be collected automatically**. LinkedIn returns
-HTTP 999 to non-browser clients, publishes no feed, and scraping it would break
-its terms of use.
-
-Workaround: add the item to [`sources/linkedin-manual.md`](sources/linkedin-manual.md)
-before the Monday run, citing the **official Microsoft page** the post refers
-to. The agent picks it up from there.
-
 ## What each newsletter covers
 
 New features · preview → GA · models added and removed · pricing changes ·
