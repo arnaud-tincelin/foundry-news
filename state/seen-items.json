@@ -1,0 +1,27 @@
+{
+  "seen": [
+    "https://devblogs.microsoft.com/foundry/egress-controls-hosted-agent",
+    "https://devblogs.microsoft.com/foundry/from-chatbots-to-automated-assistants-routines-in-microsoft-foundry-are-now-generally-available",
+    "https://azure.microsoft.com/en-us/blog/gpt-6-astra-sol-and-luna-for-production-agents-in-microsoft-foundry",
+    "https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/claude-opus-5-5-comes-to-microsoft-foundry-for-long-running-coding-and-knowledge/4558051",
+    "https://azure.microsoft.com/updates?id=563536",
+    "https://azure.microsoft.com/updates?id=571826",
+    "https://azure.microsoft.com/updates?id=571821",
+    "https://azure.microsoft.com/updates?id=571816",
+    "https://devblogs.microsoft.com/foundry/foundry-devpack-announcement",
+    "https://devblogs.microsoft.com/foundry/announcing-azure-ai-speech-llm-2607",
+    "https://azure.microsoft.com/en-us/blog/the-economics-of-agent-optimization-how-ai-agent-governance-controls-cost-and-proves-roi",
+    "https://devblogs.microsoft.com/foundry/whats-new-in-microsoft-foundry-july-august-2026"
+  ],
+  "last_run": "2026-09-25T09:43:59.091208+00:00",
+  "last_covered_through": "2026-09-25T09:37:35.023433+00:00",
+  "history": [
+    {
+      "week": "2026-W39",
+      "since": "2026-09-01T00:00:00+00:00",
+      "until": "2026-09-25T09:37:35.023433+00:00",
+      "item_count": 12,
+      "newsletter": "newsletters/2026-W39.md"
+    }
+  ]
+}
