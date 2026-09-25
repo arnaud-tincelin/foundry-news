@@ -1,0 +1,8 @@
+# Working directory for each run (regenerated every time).
+.work/
+
+# Copilot CLI session transcripts.
+copilot-session-*.md
+
+__pycache__/
+*.pyc

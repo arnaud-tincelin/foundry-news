@@ -1,0 +1,166 @@
+name: Weekly Microsoft Foundry Newsletter
+
+on:
+  schedule:
+    # 06:00 UTC every Monday, covering the week that just ended.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "Override window start (YYYY-MM-DD). Blank = continue from last run."
+        required: false
+      until:
+        description: "Override window end, exclusive (YYYY-MM-DD). Blank = now."
+        required: false
+      dry_run:
+        description: "Generate and validate but do not commit."
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: foundry-newsletter
+  cancel-in-progress: false
+
+env:
+  # Pinned for reproducible output. Change here if the model is retired.
+  NEWSLETTER_MODEL: claude-sonnet-5
+
+jobs:
+  newsletter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Collect grounded source material
+        id: collect
+        env:
+          SINCE: ${{ inputs.since }}
+          UNTIL: ${{ inputs.until }}
+        run: |
+          args=()
+          if [ -n "$SINCE" ]; then args+=(--since "$SINCE"); fi
+          if [ -n "$UNTIL" ]; then args+=(--until "$UNTIL"); fi
+          python scripts/collect_sources.py "${args[@]}"
+
+      - name: Report when there is no news
+        if: steps.collect.outputs.has_news != 'true'
+        env:
+          SINCE: ${{ steps.collect.outputs.since }}
+          UNTIL: ${{ steps.collect.outputs.until }}
+        run: |
+          {
+            echo "### No new Microsoft Foundry news this week"
+            echo "Window \`$SINCE\` to \`$UNTIL\`. No newsletter file was created."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up Node.js
+        if: steps.collect.outputs.has_news == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Copilot CLI
+        if: steps.collect.outputs.has_news == 'true'
+        run: npm install -g @github/copilot
+
+      - name: Write the newsletter
+        if: steps.collect.outputs.has_news == 'true'
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_TOKEN }}
+          NEWSLETTER_PATH: ${{ steps.collect.outputs.newsletter_path }}
+          WEEK: ${{ steps.collect.outputs.week }}
+          SINCE: ${{ steps.collect.outputs.since }}
+          UNTIL: ${{ steps.collect.outputs.until }}
+        run: |
+          if [ -z "$COPILOT_GITHUB_TOKEN" ]; then
+            echo "::error::Secret COPILOT_CLI_TOKEN is not set. See README for how to create it." >&2
+            exit 1
+          fi
+
+          copilot \
+            --prompt "Read .github/newsletter-brief.md and follow it exactly. Then read .work/brief.md, which contains every Microsoft Foundry item collected from official Microsoft feeds for the window ${SINCE} to ${UNTIL} (ISO week ${WEEK}). Fetch the source URLs listed there when you need more detail than the excerpt gives you. Write the finished newsletter to ${NEWSLETTER_PATH}. Only cite URLs that appear in .work/brief.md or that you actually fetched from learn.microsoft.com. Keep it short." \
+            --model "$NEWSLETTER_MODEL" \
+            --allow-tool 'read' \
+            --allow-tool "write(${NEWSLETTER_PATH})" \
+            --allow-tool 'url(https://devblogs.microsoft.com)' \
+            --allow-tool 'url(https://azure.microsoft.com)' \
+            --allow-tool 'url(https://learn.microsoft.com)' \
+            --allow-tool 'url(https://techcommunity.microsoft.com)' \
+            --deny-tool 'shell' \
+            --no-ask-user \
+            --log-level error \
+            --silent
+
+      - name: Validate grounding
+        if: steps.collect.outputs.has_news == 'true'
+        env:
+          NEWSLETTER_PATH: ${{ steps.collect.outputs.newsletter_path }}
+        run: python scripts/validate_newsletter.py "$NEWSLETTER_PATH"
+
+      - name: Update delta state
+        if: steps.collect.outputs.has_news == 'true' && inputs.dry_run != true
+        run: python scripts/update_state.py
+
+      - name: Commit newsletter
+        if: steps.collect.outputs.has_news == 'true' && inputs.dry_run != true
+        env:
+          NEWSLETTER_PATH: ${{ steps.collect.outputs.newsletter_path }}
+          WEEK: ${{ steps.collect.outputs.week }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$NEWSLETTER_PATH" state/seen-items.json
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
+          git commit -m "Add Microsoft Foundry newsletter for ${WEEK}" \
+            -m "Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>"
+          # A scheduled run can race another push to the default branch.
+          for attempt in 1 2 3; do
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              exit 0
+            fi
+            echo "Push failed (attempt ${attempt}), rebasing and retrying."
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+          done
+          echo "::error::Could not push after 3 attempts." >&2
+          exit 1
+
+      - name: Publish summary
+        if: steps.collect.outputs.has_news == 'true'
+        env:
+          NEWSLETTER_PATH: ${{ steps.collect.outputs.newsletter_path }}
+          WEEK: ${{ steps.collect.outputs.week }}
+          SINCE: ${{ steps.collect.outputs.since }}
+          UNTIL: ${{ steps.collect.outputs.until }}
+          ITEM_COUNT: ${{ steps.collect.outputs.item_count }}
+        run: |
+          {
+            echo "### Microsoft Foundry newsletter ${WEEK}"
+            echo "Window \`${SINCE}\` to \`${UNTIL}\` · ${ITEM_COUNT} source items."
+            echo ""
+            cat "$NEWSLETTER_PATH"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload run artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newsletter-run-${{ github.run_id }}
+          path: |
+            .work/
+            newsletters/
+          retention-days: 14
+          if-no-files-found: ignore
