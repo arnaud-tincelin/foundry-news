@@ -11,9 +11,19 @@
     "https://devblogs.microsoft.com/foundry/foundry-devpack-announcement",
     "https://devblogs.microsoft.com/foundry/announcing-azure-ai-speech-llm-2607",
     "https://azure.microsoft.com/en-us/blog/the-economics-of-agent-optimization-how-ai-agent-governance-controls-cost-and-proves-roi",
-    "https://devblogs.microsoft.com/foundry/whats-new-in-microsoft-foundry-july-august-2026"
+    "https://devblogs.microsoft.com/foundry/whats-new-in-microsoft-foundry-july-august-2026",
+    "https://devblogs.microsoft.com/foundry/five-new-claude-capabilities-now-available-in-foundry",
+    "https://devblogs.microsoft.com/foundry/azure-content-understanding-updates-august-2026",
+    "https://devblogs.microsoft.com/foundry/azure-content-understanding-gpt-5-series-guide-model-selection-grounding-improvements-and-confidence-enhancements",
+    "https://devblogs.microsoft.com/foundry/building-agents-that-act-on-your-behalf-with-toolboxes-in-foundry",
+    "https://azure.microsoft.com/updates?id=567594",
+    "https://azure.microsoft.com/updates?id=564312",
+    "https://azure.microsoft.com/updates?id=564071",
+    "https://azure.microsoft.com/updates?id=567431",
+    "https://devblogs.microsoft.com/foundry/whats-new-in-microsoft-foundry-june-2026",
+    "https://azure.microsoft.com/updates?id=563331"
   ],
-  "last_run": "2026-09-25T09:43:59.091208+00:00",
+  "last_run": "2026-09-25T11:33:39.357508+00:00",
   "last_covered_through": "2026-09-25T09:37:35.023433+00:00",
   "history": [
     {
@@ -22,6 +32,13 @@
       "until": "2026-09-25T09:37:35.023433+00:00",
       "item_count": 12,
       "newsletter": "newsletters/2026-W39.md"
+    },
+    {
+      "week": "2026-W36",
+      "since": "2026-07-01T00:00:00+00:00",
+      "until": "2026-08-31T00:00:00+00:00",
+      "item_count": 10,
+      "newsletter": "newsletters/2026-W36.md"
     }
   ]
 }
