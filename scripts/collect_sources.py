@@ -261,10 +261,15 @@ def main() -> int:
     parser.add_argument("--state", default="state/seen-items.json")
     parser.add_argument("--out-dir", default=".work")
     parser.add_argument("--bootstrap-since", default="2026-09-01", help="Start date for the very first newsletter.")
+    parser.add_argument(
+        "--ignore-state",
+        action="store_true",
+        help="Ignore previously covered items and re-collect the whole window. Use with --since to rebuild a week.",
+    )
     args = parser.parse_args()
 
     state = load_state(args.state)
-    seen: set[str] = {normalize_url(u) for u in state.get("seen", []) if u}
+    seen: set[str] = set() if args.ignore_state else {normalize_url(u) for u in state.get("seen", []) if u}
 
     until = (
         dt.datetime.strptime(args.until, "%Y-%m-%d").replace(tzinfo=dt.timezone.utc)
@@ -281,6 +286,8 @@ def main() -> int:
         since = dt.datetime.strptime(args.bootstrap_since, "%Y-%m-%d").replace(tzinfo=dt.timezone.utc)
 
     log(f"window {since.date()} -> {until.date()} | {len(seen)} previously covered items")
+    if args.ignore_state:
+        log("--ignore-state: re-collecting the full window, previously covered items are not filtered out")
 
     collected: dict[str, Item] = {}
     failures: list[str] = []

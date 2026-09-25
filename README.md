@@ -82,7 +82,13 @@ optional inputs:
 | --- | --- |
 | `since` | Override the window start (`YYYY-MM-DD`) |
 | `until` | Override the window end, exclusive (`YYYY-MM-DD`) |
+| `force` | Re-collect the window even if items were already covered |
 | `dry_run` | Generate and validate, but commit nothing |
+
+> **"No new Microsoft Foundry news this week"** means every matching item in the
+> window had already been published in an earlier newsletter — the delta was
+> empty, so no file was written. That is normal. To rebuild a week anyway, re-run
+> with **`force`** enabled.
 
 Locally:
 
@@ -104,6 +110,9 @@ python scripts/validate_newsletter.py newsletters/2026-W39.md
 end of the last window. A newsletter therefore only ever contains genuinely new
 items — re-running a past window produces nothing, and a missed week is picked
 up automatically on the next run.
+
+Rebuilding an older week (`force` + `since`/`until`) never rewinds the cursor,
+so the next scheduled run still resumes from the most recent point.
 
 ## Tuning
 
