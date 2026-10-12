@@ -6,7 +6,6 @@ You are writing one issue of a weekly newsletter about **Microsoft Foundry only*
 
 - `.work/brief.md` — the collected source material for this week. **Read this first.**
 - `.work/digest.json` — the same items as structured data, including a `categories` signal per item.
-- `sources/linkedin-manual.md` — optional manually added items. Use only if it contains entries.
 
 ## The one hard rule
 
