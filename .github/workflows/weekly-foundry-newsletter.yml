@@ -59,21 +59,6 @@ jobs:
           if [ "$FORCE" = "true" ]; then args+=(--ignore-state); fi
           python scripts/collect_sources.py "${args[@]}"
 
-      - name: Report when there is no news
-        if: steps.collect.outputs.has_news != 'true'
-        env:
-          SINCE: ${{ steps.collect.outputs.since }}
-          UNTIL: ${{ steps.collect.outputs.until }}
-        run: |
-          {
-            echo "### No new Microsoft Foundry news this week"
-            echo ""
-            echo "Window \`$SINCE\` to \`$UNTIL\` produced no *previously uncovered* items, so no newsletter file was created."
-            echo ""
-            echo "Every matching item in that window was already published in an earlier newsletter."
-            echo "To rebuild a week anyway, re-run this workflow with **force** enabled."
-          } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Set up Node.js
         if: steps.collect.outputs.has_news == 'true'
         uses: actions/setup-node@v7
@@ -112,21 +97,28 @@ jobs:
             --log-level error \
             --silent
 
+      - name: Publish No News Today when there is nothing to report
+        id: nonews
+        env:
+          NEWSLETTER_PATH: ${{ steps.collect.outputs.newsletter_path }}
+        run: python scripts/no_news.py "$NEWSLETTER_PATH"
+
       - name: Validate grounding
-        if: steps.collect.outputs.has_news == 'true'
+        if: steps.nonews.outputs.no_news != 'true'
         env:
           NEWSLETTER_PATH: ${{ steps.collect.outputs.newsletter_path }}
         run: python scripts/validate_newsletter.py "$NEWSLETTER_PATH"
 
       - name: Update delta state
-        if: steps.collect.outputs.has_news == 'true' && inputs.dry_run != true
+        if: inputs.dry_run != true && (steps.nonews.outputs.no_news != 'true' || steps.nonews.outputs.written == 'true')
         run: python scripts/update_state.py
 
       - name: Commit newsletter
-        if: steps.collect.outputs.has_news == 'true' && inputs.dry_run != true
+        if: inputs.dry_run != true && (steps.nonews.outputs.no_news != 'true' || steps.nonews.outputs.written == 'true')
         env:
           NEWSLETTER_PATH: ${{ steps.collect.outputs.newsletter_path }}
           WEEK: ${{ steps.collect.outputs.week }}
+          NO_NEWS: ${{ steps.nonews.outputs.no_news }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -135,7 +127,9 @@ jobs:
             echo "Nothing to commit."
             exit 0
           fi
-          git commit -m "Add Microsoft Foundry newsletter for ${WEEK}" \
+          subject="Add Microsoft Foundry newsletter for ${WEEK}"
+          if [ "$NO_NEWS" = "true" ]; then subject="${subject} (No News Today)"; fi
+          git commit -m "$subject" \
             -m "Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>"
           # A scheduled run can race another push to the default branch.
           for attempt in 1 2 3; do
@@ -149,19 +143,30 @@ jobs:
           exit 1
 
       - name: Publish summary
-        if: steps.collect.outputs.has_news == 'true'
         env:
           NEWSLETTER_PATH: ${{ steps.collect.outputs.newsletter_path }}
           WEEK: ${{ steps.collect.outputs.week }}
           SINCE: ${{ steps.collect.outputs.since }}
           UNTIL: ${{ steps.collect.outputs.until }}
           ITEM_COUNT: ${{ steps.collect.outputs.item_count }}
+          NO_NEWS: ${{ steps.nonews.outputs.no_news }}
+          WRITTEN: ${{ steps.nonews.outputs.written }}
         run: |
           {
-            echo "### Microsoft Foundry newsletter ${WEEK}"
-            echo "Window \`${SINCE}\` to \`${UNTIL}\` · ${ITEM_COUNT} source items."
-            echo ""
-            cat "$NEWSLETTER_PATH"
+            if [ "$NO_NEWS" != "true" ]; then
+              echo "### Microsoft Foundry newsletter ${WEEK}"
+              echo "Window \`${SINCE}\` to \`${UNTIL}\` · ${ITEM_COUNT} source items."
+              echo ""
+              cat "$NEWSLETTER_PATH"
+            elif [ "$WRITTEN" = "true" ]; then
+              echo "### No News Today (${WEEK})"
+              echo "Window \`${SINCE}\` to \`${UNTIL}\` · ${ITEM_COUNT} source items collected, none worth reporting."
+              echo ""
+              cat "$NEWSLETTER_PATH"
+            else
+              echo "### No News Today: nothing added"
+              echo "A newsletter for ${WEEK} already exists, so it was left untouched."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload run artifacts

@@ -8,7 +8,9 @@ gate enforces the grounding contract:
 2. Every link was either collected from a feed this run or is an approved
    Microsoft Learn reference page - no invented URLs.
 3. At least one collected item is actually cited.
-4. The newsletter stays short.
+4. Every Microsoft Foundry Blog post collected this run is cited - those are
+   always part of the newsletter, whatever their type.
+5. The newsletter stays short.
 
 Any violation fails the workflow, so a bad newsletter never reaches the
 default branch.
@@ -39,6 +41,9 @@ MD_LINK_RE = re.compile(r"\[[^\]]*\]\((https?://[^)\s]+)\)")
 BARE_URL_RE = re.compile(r"(?<![(\[])\bhttps?://[^\s<>)\]]+")
 
 MAX_WORDS = 900
+
+# Posts under these prefixes must always appear, even when they announce no product change.
+REQUIRED_PREFIXES = ("https://devblogs.microsoft.com/foundry/",)
 
 
 def normalize_url(url: str) -> str:
@@ -120,11 +125,15 @@ def main() -> int:
     if collected and not cited_collected:
         errors.append("newsletter cites none of the collected items")
 
+    required = {u for u in collected if u.startswith(REQUIRED_PREFIXES)}
+    for url in sorted(required - cited_collected):
+        errors.append(f"Microsoft Foundry Blog post is missing from the newsletter: {url}")
+
     words = len(text.split())
     if words > MAX_WORDS:
         errors.append(f"newsletter is too long: {words} words (max {MAX_WORDS})")
 
-    uncited = collected - cited_collected
+    uncited = collected - cited_collected - required
     if uncited:
         warnings.append(f"{len(uncited)} collected item(s) were judged not newsworthy and left out")
 

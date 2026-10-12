@@ -45,13 +45,18 @@ class Feed:
     url: str
     # When True every entry is assumed Foundry-relevant (dedicated Foundry feed).
     implicit_foundry: bool = False
+    # WordPress feeds hold only the newest 10 posts; older ones are at ?paged=N.
+    paginated: bool = False
 
 
 FEEDS: tuple[Feed, ...] = (
-    Feed("Microsoft Foundry Blog", "https://devblogs.microsoft.com/foundry/feed/", implicit_foundry=True),
-    Feed("Azure Blog", "https://azure.microsoft.com/en-us/blog/feed/"),
+    Feed("Microsoft Foundry Blog", "https://devblogs.microsoft.com/foundry/feed/", implicit_foundry=True, paginated=True),
+    Feed("Azure Blog", "https://azure.microsoft.com/en-us/blog/feed/", paginated=True),
     Feed("Azure Updates", "https://www.microsoft.com/releasecommunications/api/v2/azure/rss"),
 )
+
+# Upper bound on feed pages per run, so a very old --since cannot loop forever.
+MAX_PAGES = 8
 
 # Reference pages the agent may consult to verify details (regions, model
 # availability, pricing). Not parsed here - HTML scraping is too brittle - but
@@ -69,6 +74,16 @@ FOUNDRY_PATTERNS = (
     r"\bfoundry\s+(agent|local|models|service|sdk|portal|tools)\b",
     r"\bfoundry\b",
 )
+
+# The Azure Blog excerpt is only a post's intro, so a post can be about Foundry
+# without naming it there. Feeds that carry the full article are also matched on
+# product-name mentions in the body, and the count is passed on to the agent.
+BODY_FOUNDRY_RE = re.compile(
+    r"\b(?:microsoft|azure\s+ai)\s+foundry\b|\bai\s+foundry\b"
+    r"|\bfoundry\s+(?:agent|local|models?|iq|tools?|portal|sdk|service|control)\b",
+    re.IGNORECASE,
+)
+MIN_BODY_MENTIONS = 3
 
 # Categories the newsletter must cover, used to pre-tag items for the agent.
 CATEGORY_RULES: tuple[tuple[str, str], ...] = (
@@ -170,24 +185,31 @@ class Item:
     published: str
     summary: str
     categories: list[str] = field(default_factory=list)
+    # Foundry product-name mentions in the full article; None when the feed has no full text.
+    foundry_mentions: int | None = None
+
+
+CONTENT_TAG = "{http://purl.org/rss/1.0/modules/content/}encoded"
 
 
 def _text(node: ET.Element | None) -> str:
     return (node.text or "").strip() if node is not None and node.text else ""
 
 
-def parse_feed(raw: bytes, feed: Feed) -> list[Item]:
+def parse_feed(raw: bytes, feed: Feed) -> tuple[list[Item], dt.datetime | None]:
+    """Return the Foundry-related items and the oldest publish date on the page."""
     # Feeds are served with a UTF-8 BOM, which ElementTree refuses.
     text = raw.decode("utf-8-sig", errors="replace")
     try:
         root = ET.fromstring(text)
     except ET.ParseError as exc:
         log(f"  ! unparseable XML from {feed.name}: {exc}")
-        return []
+        return [], None
 
     atom = "{http://www.w3.org/2005/Atom}"
     nodes = root.findall(".//item") or root.findall(f".//{atom}entry")
     items: list[Item] = []
+    oldest: dt.datetime | None = None
 
     for node in nodes:
         title = strip_html(_text(node.find("title")) or _text(node.find(f"{atom}title")), 300)
@@ -201,8 +223,9 @@ def parse_feed(raw: bytes, feed: Feed) -> list[Item]:
             link = _text(node.find("guid"))
 
         description = _text(node.find("description")) or _text(node.find(f"{atom}summary"))
-        content = _text(node.find("{http://purl.org/rss/1.0/modules/content/}encoded"))
+        content = _text(node.find(CONTENT_TAG))
         summary = strip_html(description or content)
+        mentions = len(BODY_FOUNDRY_RE.findall(strip_html(content, len(content)))) if content else None
 
         published_raw = (
             _text(node.find("pubDate"))
@@ -211,6 +234,8 @@ def parse_feed(raw: bytes, feed: Feed) -> list[Item]:
             or _text(node.find(f"{atom}published"))
         )
         published = parse_date(published_raw)
+        if published is not None and (oldest is None or published < oldest):
+            oldest = published
 
         url = normalize_url(link)
         if not url or not title or published is None:
@@ -219,7 +244,7 @@ def parse_feed(raw: bytes, feed: Feed) -> list[Item]:
             continue
 
         haystack = f"{title} {summary}"
-        if not (feed.implicit_foundry or is_foundry(haystack)):
+        if not (feed.implicit_foundry or is_foundry(haystack) or (mentions or 0) >= MIN_BODY_MENTIONS):
             continue
 
         items.append(
@@ -231,9 +256,48 @@ def parse_feed(raw: bytes, feed: Feed) -> list[Item]:
                 published=published.isoformat(),
                 summary=summary,
                 categories=categorize(haystack),
+                foundry_mentions=mentions,
             )
         )
-    return items
+    return items, oldest
+
+
+def load_feed(feed: Feed, since: dt.datetime) -> tuple[list[Item], int]:
+    """Fetch a feed, following older pages until the start of the window is covered.
+
+    Raises when the first page cannot be fetched. A failure on a later page only
+    stops the walk, so a partial result is still better than none.
+    """
+    collected: dict[str, Item] = {}
+    pages = 0
+    previous_oldest: dt.datetime | None = None
+
+    for page in range(1, (MAX_PAGES if feed.paginated else 1) + 1):
+        url = feed.url if page == 1 else f"{feed.url}?paged={page}"
+        try:
+            raw = fetch(url)
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            if page == 1:
+                raise
+            log(f"  ! {feed.name} page {page} unavailable ({exc}); older posts may be missing")
+            break
+
+        pages += 1
+        parsed, oldest = parse_feed(raw, feed)
+        for item in parsed:
+            collected.setdefault(item.id, item)
+
+        if oldest is None or oldest < since:
+            break
+        # A feed that ignores ?paged serves the same page again: stop instead of looping.
+        if previous_oldest is not None and oldest >= previous_oldest:
+            break
+        previous_oldest = oldest
+    else:
+        if feed.paginated:
+            log(f"  ! {feed.name}: stopped at {MAX_PAGES} pages before reaching {since.date()}; older posts may be missing")
+
+    return list(collected.values()), pages
 
 
 def load_state(path: str) -> dict:
@@ -294,13 +358,12 @@ def main() -> int:
 
     for feed in FEEDS:
         try:
-            raw = fetch(feed.url)
+            parsed, pages = load_feed(feed, since)
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             log(f"  ! {feed.name} unreachable: {exc}")
             failures.append(feed.name)
             continue
 
-        parsed = parse_feed(raw, feed)
         kept = 0
         for item in parsed:
             published = dt.datetime.fromisoformat(item.published)
@@ -310,7 +373,7 @@ def main() -> int:
                 continue
             collected[item.id] = item
             kept += 1
-        log(f"  {feed.name}: {len(parsed)} foundry items, {kept} new in window")
+        log(f"  {feed.name}: {len(parsed)} foundry items over {pages} page(s), {kept} new in window")
 
     if failures and len(failures) == len(FEEDS):
         log("! every feed failed - aborting so we do not publish an unfounded newsletter")
@@ -353,9 +416,10 @@ def main() -> int:
             f"- Source: {item.source}",
             f"- Published: {item.published[:10]}",
             f"- Signals: {', '.join(item.categories)}",
-            f"- Excerpt: {item.summary}",
-            "",
         ]
+        if item.foundry_mentions is not None:
+            lines.append(f"- Foundry mentions in article: {item.foundry_mentions}")
+        lines += [f"- Excerpt: {item.summary}", ""]
     brief_path = os.path.join(args.out_dir, "brief.md")
     with open(brief_path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines))

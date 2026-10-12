@@ -23,13 +23,38 @@ You may fetch the source URLs to write an accurate summary. Prefer doing so for 
 
 In scope: Microsoft Foundry (formerly Azure AI Foundry) — the platform, Foundry Agent Service, Foundry Models, Foundry Local, Foundry SDK/portal/tools, and models served through Foundry.
 
-Out of scope — drop these even though they were collected:
+**Every post from the Microsoft Foundry Blog is always in scope.** Include every
+item in `.work/brief.md` whose `Source` is `Microsoft Foundry Blog` (its URL is
+under `https://devblogs.microsoft.com/foundry/`), whatever it is: a product
+announcement, a guide, an explainer, a deep dive or an opinion piece. Never drop
+one because it announces no product change — the validator fails the run if one
+is missing. A recap post is listed as a single pointer; do not re-list the
+updates it recaps.
+
+For items from any other source, drop these even though they were collected:
 - Anything not about Foundry.
 - Thought-leadership, opinion, "economics of", customer stories and marketing narrative with no product change.
 - Event announcements and recaps, unless they carry a concrete product change.
 - Republished recaps of periods already covered by a previous newsletter.
 
-If nothing survives the filter, say so in one line rather than padding.
+**Azure Blog items** are general Azure posts, collected because the article body
+mentions Foundry. Each shows `Foundry mentions in article`. A few mentions
+usually mean Foundry is only named in passing (a product list, or a Foundry
+feature inside another product's announcement): drop the item as "not about
+Foundry". Keep it when Foundry is what the post announces — a new feature, model,
+GA, pricing or region. Fetch the post when the excerpt does not settle it.
+
+If nothing survives the filter, write **only** the note below — no sections, no
+bullets, no links, no list of what you dropped. The pipeline replaces it with the
+standard No News Today newsletter, so the run still succeeds.
+
+```markdown
+# Microsoft Foundry Weekly — <ISO week>
+
+_<start date> to <end date> · 0 updates_
+
+No News Today
+```
 
 ## Structure
 
@@ -56,6 +81,9 @@ _<start date> to <end date> · <N> updates_
 ## 🌍 Regions
 - **<Capability>** — now in <regions>. ([source](<url>))
 
+## 📚 From the Foundry blog
+- **<Post title>** — <what the post covers and who it helps, in one sentence>. ([source](<url>))
+
 ## 📌 Also worth knowing
 - <Anything important that does not fit above.> ([source](<url>))
 ```
@@ -67,5 +95,6 @@ _<start date> to <end date> · <N> updates_
 - Lead with the concrete change, not the marketing framing.
 - Write plainly: "now generally available", not "we are thrilled to announce general availability".
 - Use the exact product and model names from the source.
-- Do not repeat anything from a previous newsletter in `newsletters/` — the collected items are already deduplicated, but if an item is a recap of older news, drop it.
+- Do not repeat anything from a previous newsletter in `newsletters/` — the collected items are already deduplicated, but if an item is a recap of older news, drop it (Foundry Blog posts are the exception, see Scope).
 - Classify by what the item *is*: a preview launching is a new feature, a preview becoming GA belongs under Preview → GA.
+- A Foundry Blog post that announces a product change goes under that change's section. One that announces none (guide, explainer, deep dive) goes under From the Foundry blog. Never list a post twice.

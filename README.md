@@ -12,9 +12,12 @@ else is allowed in.
 ```mermaid
 flowchart LR
     A[Official Microsoft<br/>RSS feeds] --> B[collect_sources.py<br/>filter · window · delta]
+    B -->|no new items| G[no_news.py<br/>No News Today]
     B -->|.work/brief.md| C[Copilot CLI agent<br/>writes the newsletter]
+    C -->|nothing newsworthy| G
     C --> D[validate_newsletter.py<br/>grounding gate]
     D -->|pass| E[Commit to<br/>default branch]
+    G --> E
     D -->|fail| F[Run fails —<br/>nothing committed]
 ```
 
@@ -23,30 +26,52 @@ flowchart LR
    removes everything already covered by a previous newsletter.
 2. **Write** — the Copilot CLI agent reads the collected material, may fetch the
    source pages for detail, and writes a short newsletter.
-3. **Validate** — `scripts/validate_newsletter.py` rejects the result if any
-   link is non-Microsoft, was not collected this run, or if the newsletter is
-   too long. A failure means nothing is committed.
-4. **Commit** — the newsletter and the updated delta state are pushed.
+3. **No news?** — `scripts/no_news.py` handles a week with nothing to report
+   (see below), so the run still succeeds.
+4. **Validate** — `scripts/validate_newsletter.py` rejects the result if any
+   link is non-Microsoft, was not collected this run, if any Microsoft Foundry
+   Blog post was left out, or if the newsletter is too long. A failure means
+   nothing is committed.
+5. **Commit** — the newsletter and the updated delta state are pushed.
 
 Runs **Mondays at 06:00 UTC** (`.github/workflows/weekly-foundry-newsletter.yml`),
 and on demand from the Actions tab.
 
 ## Sources
 
-| Source | Feed |
-| --- | --- |
-| Microsoft Foundry Blog | `devblogs.microsoft.com/foundry/feed/` |
-| Azure Blog | `azure.microsoft.com/en-us/blog/feed/` |
-| Azure Updates | `microsoft.com/releasecommunications/api/v2/azure/rss` |
-| Microsoft Learn (reference, agent-fetched) | *What's new in Azure AI Foundry*, AI Foundry pricing |
+| Source | Feed | Picked up |
+| --- | --- | --- |
+| Microsoft Foundry Blog | `devblogs.microsoft.com/foundry/feed/` | every post |
+| Azure Blog | `azure.microsoft.com/en-us/blog/feed/` | posts whose title or excerpt names Foundry, or whose full article mentions Foundry products at least 3 times |
+| Azure Updates | `microsoft.com/releasecommunications/api/v2/azure/rss` | entries that mention Foundry |
+| Microsoft Learn (reference, agent-fetched) | *What's new in Azure AI Foundry*, AI Foundry pricing | — |
+
+The two blog feeds only serve their newest 10 posts per page, so the collector
+follows `?paged=N` back to the start of the window (up to 8 pages). The Azure
+Blog excerpt is just a post's intro, so Foundry is also looked for in the full
+article, and the mention count is passed to the agent.
 
 ## What each newsletter covers
 
 New features · preview → GA · models added and removed · pricing changes ·
-new regions · anything else important.
+new regions · anything else important — plus **every post from the Microsoft
+Foundry Blog**, including guides and explainers that announce no product change
+(listed under *From the Foundry blog*).
 
-Sections with nothing to report are omitted. A week with no Foundry news
-produces **no file** rather than an empty one.
+Sections with nothing to report are omitted.
+
+### No News Today
+
+A week with nothing to report still succeeds and still publishes a file: an
+empty newsletter whose body is **No News Today**. That happens when
+
+- the collector found no new items, or
+- items were collected but the agent judged none of them newsworthy (a
+  link-free note, replaced by the standard text so the wording never varies).
+
+A Microsoft Foundry Blog post is never dropped this way, and a newsletter
+already published for the same week is never overwritten by a *No News Today*
+one.
 
 ## Setup
 
@@ -75,10 +100,11 @@ optional inputs:
 | `force` | Re-collect the window even if items were already covered |
 | `dry_run` | Generate and validate, but commit nothing |
 
-> **"No new Microsoft Foundry news this week"** means every matching item in the
-> window had already been published in an earlier newsletter — the delta was
-> empty, so no file was written. That is normal. To rebuild a week anyway, re-run
-> with **`force`** enabled.
+> **A *No News Today* run** means nothing new was worth reporting: either every
+> matching item in the window had already been published in an earlier
+> newsletter, or the agent judged none of the new ones newsworthy. The run
+> succeeds and commits the *No News Today* newsletter. That is normal. To rebuild
+> a week anyway, re-run with **`force`** enabled.
 
 Locally:
 
@@ -91,7 +117,8 @@ copilot --prompt "Read .github/newsletter-brief.md and follow it exactly. Then r
   --allow-tool 'url(https://learn.microsoft.com)' \
   --allow-tool 'url(https://techcommunity.microsoft.com)' \
   --deny-tool 'shell' --no-ask-user --silent
-python scripts/validate_newsletter.py newsletters/2026-W39.md
+python scripts/no_news.py newsletters/2026-W39.md   # prints NO NEWS when there is nothing to report
+python scripts/validate_newsletter.py newsletters/2026-W39.md   # skip it when the line above printed NO NEWS
 ```
 
 ## Delta tracking
@@ -99,7 +126,8 @@ python scripts/validate_newsletter.py newsletters/2026-W39.md
 `state/seen-items.json` records the URL of every item ever covered, plus the
 end of the last window. A newsletter therefore only ever contains genuinely new
 items — re-running a past window produces nothing, and a missed week is picked
-up automatically on the next run.
+up automatically on the next run. A *No News Today* week advances the cursor
+like any other.
 
 Rebuilding an older week (`force` + `since`/`until`) never rewinds the cursor,
 so the next scheduled run still resumes from the most recent point.
@@ -109,6 +137,7 @@ so the next scheduled run still resumes from the most recent point.
 | Want to change | Edit |
 | --- | --- |
 | Tone, structure, what to drop | `.github/newsletter-brief.md` |
-| Feeds, Foundry filter, categories | `scripts/collect_sources.py` |
-| Allowed domains, length limit | `scripts/validate_newsletter.py` |
+| Feeds, paging, Foundry filter (incl. the Azure Blog mention threshold), categories | `scripts/collect_sources.py` |
+| Allowed domains, length limit, posts that must always appear | `scripts/validate_newsletter.py` |
+| What counts as a no-news note, the *No News Today* text | `scripts/no_news.py` |
 | Schedule, model | `.github/workflows/weekly-foundry-newsletter.yml` |

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Record this run's items as covered so next week only reports the delta.
 
-Runs only after the newsletter passed validation and is about to be committed.
-Storing every item id (not just a cursor date) means a missed, re-run or
-backfilled week can never produce duplicate coverage.
+Runs only after the newsletter passed validation (or the No News Today
+newsletter was written) and is about to be committed. Storing every item id
+(not just a cursor date) means a missed, re-run or backfilled week can never
+produce duplicate coverage.
 """
 
 from __future__ import annotations
