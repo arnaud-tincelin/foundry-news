@@ -21,10 +21,18 @@
     "https://azure.microsoft.com/updates?id=564071",
     "https://azure.microsoft.com/updates?id=567431",
     "https://devblogs.microsoft.com/foundry/whats-new-in-microsoft-foundry-june-2026",
-    "https://azure.microsoft.com/updates?id=563331"
+    "https://azure.microsoft.com/updates?id=563331",
+    "https://devblogs.microsoft.com/foundry/browser-automation-tool-ga",
+    "https://devblogs.microsoft.com/foundry/whats-new-in-microsoft-foundry-september-2026",
+    "https://devblogs.microsoft.com/foundry/content-understanding-confidence-grounding-hitl",
+    "https://devblogs.microsoft.com/foundry/more-than-a-schema-content-understanding-prebuilt-analyzers",
+    "https://devblogs.microsoft.com/foundry/choosing-azure-document-intelligence-and-content-understanding",
+    "https://azure.microsoft.com/en-us/blog/microsoft-named-a-leader-in-the-2026-gartner-magic-quadrant-for-global-industrial-aiot-platforms",
+    "https://devblogs.microsoft.com/foundry/why-content-extraction-still-matters-in-the-genai-era",
+    "https://www.microsoft.com/en-us/sql-server/blog/2026/09/28/sql-server-on-azure-local-is-now-generally-available"
   ],
-  "last_run": "2026-09-25T11:33:39.357508+00:00",
-  "last_covered_through": "2026-09-25T09:37:35.023433+00:00",
+  "last_run": "2026-10-19T11:39:11.611471+00:00",
+  "last_covered_through": "2026-10-19T11:38:19.135499+00:00",
   "history": [
     {
       "week": "2026-W39",
@@ -39,6 +47,13 @@
       "until": "2026-08-31T00:00:00+00:00",
       "item_count": 10,
       "newsletter": "newsletters/2026-W36.md"
+    },
+    {
+      "week": "2026-W43",
+      "since": "2026-09-25T09:37:35.023433+00:00",
+      "until": "2026-10-19T11:38:19.135499+00:00",
+      "item_count": 8,
+      "newsletter": "newsletters/2026-W43.md"
     }
   ]
 }
