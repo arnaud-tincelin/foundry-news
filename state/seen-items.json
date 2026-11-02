@@ -29,10 +29,13 @@
     "https://devblogs.microsoft.com/foundry/choosing-azure-document-intelligence-and-content-understanding",
     "https://azure.microsoft.com/en-us/blog/microsoft-named-a-leader-in-the-2026-gartner-magic-quadrant-for-global-industrial-aiot-platforms",
     "https://devblogs.microsoft.com/foundry/why-content-extraction-still-matters-in-the-genai-era",
-    "https://www.microsoft.com/en-us/sql-server/blog/2026/09/28/sql-server-on-azure-local-is-now-generally-available"
+    "https://www.microsoft.com/en-us/sql-server/blog/2026/09/28/sql-server-on-azure-local-is-now-generally-available",
+    "https://devblogs.microsoft.com/foundry/microsoft-copilot-harness-in-foundry",
+    "https://azure.microsoft.com/updates?id=577260",
+    "https://devblogs.microsoft.com/foundry/announcing-azure-ai-speech-llm-09-2026"
   ],
-  "last_run": "2026-10-26T11:55:32.440367+00:00",
-  "last_covered_through": "2026-10-26T11:55:32.071745+00:00",
+  "last_run": "2026-11-02T14:17:39.759069+00:00",
+  "last_covered_through": "2026-11-02T14:17:04.736511+00:00",
   "history": [
     {
       "week": "2026-W39",
@@ -61,6 +64,13 @@
       "until": "2026-10-26T11:55:32.071745+00:00",
       "item_count": 0,
       "newsletter": "newsletters/2026-W44.md"
+    },
+    {
+      "week": "2026-W45",
+      "since": "2026-10-26T11:55:32.071745+00:00",
+      "until": "2026-11-02T14:17:04.736511+00:00",
+      "item_count": 3,
+      "newsletter": "newsletters/2026-W45.md"
     }
   ]
 }
