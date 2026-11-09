@@ -32,10 +32,15 @@
     "https://www.microsoft.com/en-us/sql-server/blog/2026/09/28/sql-server-on-azure-local-is-now-generally-available",
     "https://devblogs.microsoft.com/foundry/microsoft-copilot-harness-in-foundry",
     "https://azure.microsoft.com/updates?id=577260",
-    "https://devblogs.microsoft.com/foundry/announcing-azure-ai-speech-llm-09-2026"
+    "https://devblogs.microsoft.com/foundry/announcing-azure-ai-speech-llm-09-2026",
+    "https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/building-the-next-generation-of-multimodal-ai-experiences-with-fal-in-microsoft-/4570032",
+    "https://devblogs.microsoft.com/foundry/microsoft-foundry-azure-developer-cli-ga",
+    "https://azure.microsoft.com/en-us/blog/stop-treating-agents-as-one-off-projects-and-start-running-them-as-a-continuous-discipline",
+    "https://devblogs.microsoft.com/foundry/foundry-local-agentic-coding-qwen3-8-27b",
+    "https://devblogs.microsoft.com/foundry/whats-new-in-microsoft-foundry-october-2026"
   ],
-  "last_run": "2026-11-02T14:17:39.759069+00:00",
-  "last_covered_through": "2026-11-02T14:17:04.736511+00:00",
+  "last_run": "2026-11-09T14:45:14.905527+00:00",
+  "last_covered_through": "2026-11-09T14:44:37.028195+00:00",
   "history": [
     {
       "week": "2026-W39",
@@ -71,6 +76,13 @@
       "until": "2026-11-02T14:17:04.736511+00:00",
       "item_count": 3,
       "newsletter": "newsletters/2026-W45.md"
+    },
+    {
+      "week": "2026-W46",
+      "since": "2026-11-02T14:17:04.736511+00:00",
+      "until": "2026-11-09T14:44:37.028195+00:00",
+      "item_count": 5,
+      "newsletter": "newsletters/2026-W46.md"
     }
   ]
 }
