@@ -39,10 +39,29 @@
     "https://devblogs.microsoft.com/foundry/foundry-local-agentic-coding-qwen3-8-27b",
     "https://devblogs.microsoft.com/foundry/whats-new-in-microsoft-foundry-october-2026",
     "https://devblogs.microsoft.com/foundry/content-understanding-adds-gpt-5-6-gpt-6-and-gpt-6-1-choose-the-right-model-for-your-workload",
-    "https://devblogs.microsoft.com/foundry/when-one-pass-isnt-enough-agentic-mode-in-azure-content-understanding"
+    "https://devblogs.microsoft.com/foundry/when-one-pass-isnt-enough-agentic-mode-in-azure-content-understanding",
+    "https://devblogs.microsoft.com/foundry/hosted-agents-private-network-setup",
+    "https://azure.microsoft.com/updates?id=581463",
+    "https://azure.microsoft.com/updates?id=581468",
+    "https://azure.microsoft.com/updates?id=579952",
+    "https://azure.microsoft.com/updates?id=581713",
+    "https://azure.microsoft.com/updates?id=581746",
+    "https://devblogs.microsoft.com/foundry/managed-compute-ga",
+    "https://devblogs.microsoft.com/foundry/build-trusted-autonomous-agents-for-your-team-with-microsoft-foundry",
+    "https://devblogs.microsoft.com/foundry/hosted-agents-foundry-agent-service-ignite-2026",
+    "https://devblogs.microsoft.com/foundry/browser-automation-tool-ignite",
+    "https://devblogs.microsoft.com/foundry/the-foundry-dev-pack-is-here-build-foundry-agents-your-way",
+    "https://devblogs.microsoft.com/foundry/whats-new-in-foundry-agent-service-at-ignite-2026",
+    "https://devblogs.microsoft.com/foundry/build-once-reuse-across-your-agent-fleet-tools-and-toolboxes-in-foundry",
+    "https://azure.microsoft.com/updates?id=579680",
+    "https://azure.microsoft.com/en-us/blog/microsoft-and-oracle-bring-agentic-ai-into-flow-of-enterprise-work",
+    "https://azure.microsoft.com/en-us/blog/introducing-azure-catalyst-agentic-modernization-and-new-ai-infrastructure-innovations",
+    "https://azure.microsoft.com/en-us/blog/microsoft-ignite-2026-whats-new-in-azure-the-platform-purpose-built-for-ai",
+    "https://azure.microsoft.com/en-us/blog/continuous-improvement-comes-to-microsoft-foundry",
+    "https://azure.microsoft.com/en-us/blog/introducing-the-new-microsoft-iq-putting-your-organizations-intelligence-to-work-in-every-agent"
   ],
-  "last_run": "2026-11-16T14:21:45.652360+00:00",
-  "last_covered_through": "2026-11-16T14:21:13.385593+00:00",
+  "last_run": "2026-11-23T16:55:30.034255+00:00",
+  "last_covered_through": "2026-11-23T16:54:10.250287+00:00",
   "history": [
     {
       "week": "2026-W39",
@@ -92,6 +111,13 @@
       "until": "2026-11-16T14:21:13.385593+00:00",
       "item_count": 2,
       "newsletter": "newsletters/2026-W47.md"
+    },
+    {
+      "week": "2026-W48",
+      "since": "2026-11-16T14:21:13.385593+00:00",
+      "until": "2026-11-23T16:54:10.250287+00:00",
+      "item_count": 19,
+      "newsletter": "newsletters/2026-W48.md"
     }
   ]
 }
